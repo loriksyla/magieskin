@@ -50,6 +50,11 @@ export const saveOrder = async (order: Order): Promise<void> => {
     });
 
     if (!response.ok) {
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const payload = await response.json();
+        throw new Error(payload?.details || payload?.error || 'Order API failed');
+      }
       const errorText = await response.text();
       throw new Error(errorText || 'Order API failed');
     }

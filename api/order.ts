@@ -134,8 +134,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { error } = await supabase.from('orders').insert([payload]);
   if (error) {
-    console.error('Order save failed', error);
-    res.status(500).json({ error: 'Order save failed' });
+    console.error('Order save failed', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code,
+    });
+    res.status(500).json({ error: 'Order save failed', details: error.message });
     return;
   }
 
