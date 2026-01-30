@@ -35,6 +35,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, t
     otherCity: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -57,6 +58,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, t
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitError('');
     
     // Create Order Object
     const newOrder: Order = {
@@ -72,9 +74,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, t
     try {
       await saveOrder(newOrder);
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Order failed';
       console.error('Order failed', error);
       setIsSubmitting(false);
-      alert('Order failed. Please try again in a moment.');
+      setSubmitError(message);
       return;
     }
 
@@ -214,6 +217,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, t
               )}
 
               <div className="pt-6 border-t border-gray-100 mt-6">
+                {submitError && (
+                  <div className="mb-4 rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    {submitError}
+                  </div>
+                )}
                 <div className="flex justify-between items-center mb-6">
                   <span className="text-sm text-secondary">Total për pagesë</span>
                   <span className="text-xl font-serif font-bold">${total}</span>
