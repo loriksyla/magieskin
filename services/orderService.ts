@@ -1,5 +1,5 @@
 import { Order } from '../types';
-import { supabase } from './supabaseClient';
+import { getAdminPassword } from './authService';
 
 const STORAGE_KEY = 'magie_skin_data_secure';
 
@@ -12,22 +12,19 @@ const decodeData = (str: string): any => {
 };
 
 export const getOrders = async (): Promise<Order[]> => {
-  // 1. Try Supabase (Cloud DB)
-  if (supabase) {
+  const adminPassword = getAdminPassword();
+  if (adminPassword) {
     try {
-      console.log("Fetching orders from Cloud (Supabase)...");
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('date', { ascending: false });
-      
-      if (error) throw error;
-      if (data) {
-        console.log(`Loaded ${data.length} orders from Cloud.`);
-        return data as Order[];
+      const response = await fetch('/api/admin-orders', {
+        headers: { 'x-admin-password': adminPassword },
+      });
+      if (!response.ok) {
+        throw new Error('Admin orders request failed');
       }
+      const payload = await response.json();
+      return (payload.data ?? []) as Order[];
     } catch (e) {
-      console.error("Supabase fetch error - falling back to local:", e);
+      console.error("Admin orders fetch error:", e);
     }
   }
 
@@ -79,18 +76,24 @@ export const saveOrder = async (order: Order): Promise<void> => {
 };
 
 export const updateOrderStatus = async (orderId: string, status: 'pending' | 'completed'): Promise<void> => {
-  // 1. Try Supabase
-  if (supabase) {
+  const adminPassword = getAdminPassword();
+  if (adminPassword) {
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status })
-        .eq('id', orderId);
-      
-      if (error) throw error;
+      const response = await fetch('/api/admin-orders', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
+        body: JSON.stringify({ id: orderId, status }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Admin order update failed');
+      }
       return;
     } catch (e) {
-      console.error("Supabase update error:", e);
+      console.error("Admin order update error:", e);
     }
   }
 

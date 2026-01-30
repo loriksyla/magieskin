@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, CheckCircle, Clock, Search, LogOut, Lock, RefreshCcw } from 'lucide-react';
 import { Order } from '../types';
 import { getOrders, updateOrderStatus } from '../services/orderService';
-import { verifyPassword, checkSession, setSession } from '../services/authService';
+import { verifyPassword, checkSession, setSession, setAdminPassword, getAdminPassword } from '../services/authService';
 
 interface AdminPanelProps {
   onBack: () => void;
@@ -19,7 +19,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
 
   useEffect(() => {
     // Check for existing session
-    if (checkSession()) {
+    if (checkSession() && getAdminPassword()) {
       setIsAuthenticated(true);
     }
   }, []);
@@ -52,6 +52,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ onBack }) => {
       if (isValid) {
         setIsAuthenticated(true);
         setSession(true);
+        setAdminPassword(password);
       } else {
         setError('Invalid credentials');
       }

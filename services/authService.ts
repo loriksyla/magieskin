@@ -1,29 +1,36 @@
-// SHA-256 hash for 'admin123'. 
-// In a real app, this should be handled server-side, but this prevents the plain-text password from appearing in the bundle.
-const ADMIN_HASH = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9';
+const SESSION_KEY = 'magie_admin_session';
+const PASSWORD_KEY = 'magie_admin_password';
 
 export const verifyPassword = async (password: string): Promise<boolean> => {
   try {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex === ADMIN_HASH;
+    const response = await fetch('/api/admin-auth', {
+      method: 'POST',
+      headers: { 'x-admin-password': password },
+    });
+    return response.ok;
   } catch (e) {
-    console.error("Crypto API not supported", e);
+    console.error("Auth request failed", e);
     return false;
   }
 };
 
 export const checkSession = (): boolean => {
-  return sessionStorage.getItem('magie_admin_session') === 'true';
+  return sessionStorage.getItem(SESSION_KEY) === 'true';
 };
 
 export const setSession = (isValid: boolean) => {
   if (isValid) {
-    sessionStorage.setItem('magie_admin_session', 'true');
+    sessionStorage.setItem(SESSION_KEY, 'true');
   } else {
-    sessionStorage.removeItem('magie_admin_session');
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(PASSWORD_KEY);
   }
+};
+
+export const setAdminPassword = (password: string) => {
+  sessionStorage.setItem(PASSWORD_KEY, password);
+};
+
+export const getAdminPassword = (): string | null => {
+  return sessionStorage.getItem(PASSWORD_KEY);
 };
