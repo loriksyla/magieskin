@@ -1,5 +1,4 @@
 import { Order } from '../types';
-import { sendOrderEmails } from './emailService';
 import { supabase } from './supabaseClient';
 
 const STORAGE_KEY = 'magie_skin_data_secure';
@@ -46,37 +45,37 @@ export const getOrders = async (): Promise<Order[]> => {
 };
 
 export const saveOrder = async (order: Order): Promise<void> => {
-  // 1. Try Supabase
-  if (supabase) {
-    try {
-      console.log("Saving order to Cloud...");
-      const { error } = await supabase
-        .from('orders')
-        .insert([order]);
-      
-      if (error) throw error;
-      console.log("Order saved to Cloud successfully.");
-      await sendOrderEmails(order);
-      return; // Success
-    } catch (e) {
-      console.error("Supabase save error:", e);
+  try {
+    const response = await fetch('/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || 'Order API failed');
     }
+
+    return;
+  } catch (e) {
+    console.error("Order API error:", e);
   }
 
-  // 2. Fallback to Local Storage
-  return new Promise(async (resolve) => {
-    try {
-      const currentOrders = localStorage.getItem(STORAGE_KEY);
-      const orders = currentOrders ? decodeData(currentOrders) : [];
-      const updatedOrders = [order, ...orders];
-      localStorage.setItem(STORAGE_KEY, encodeData(updatedOrders));
-      await sendOrderEmails(order);
-      resolve();
-    } catch (e) {
-      console.error("Local storage save error", e);
-      resolve();
-    }
-  });
+  if (import.meta.env.DEV) {
+    return new Promise((resolve) => {
+      try {
+        const currentOrders = localStorage.getItem(STORAGE_KEY);
+        const orders = currentOrders ? decodeData(currentOrders) : [];
+        const updatedOrders = [order, ...orders];
+        localStorage.setItem(STORAGE_KEY, encodeData(updatedOrders));
+        resolve();
+      } catch (e) {
+        console.error("Local storage save error", e);
+        resolve();
+      }
+    });
+  }
 };
 
 export const updateOrderStatus = async (orderId: string, status: 'pending' | 'completed'): Promise<void> => {

@@ -69,7 +69,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ isOpen, onClose, t
     };
 
     // Save to Service (Async)
-    await saveOrder(newOrder);
+    try {
+      await saveOrder(newOrder);
+    } catch (error) {
+      console.error('Order failed', error);
+      setIsSubmitting(false);
+      alert('Order failed. Please try again in a moment.');
+      return;
+    }
 
     // UX Delay for "processing" feel
     setTimeout(() => {
