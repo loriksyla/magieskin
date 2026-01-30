@@ -5,7 +5,9 @@ let aiClient: GoogleGenAI | null = null;
 
 const getAiClient = () => {
   if (!aiClient) {
-    const apiKey = process.env.API_KEY;
+    // Hardcoded key to ensure functionality in production deployment
+    const apiKey = 'AIzaSyA_mVZ-0amu6LXNIdZwVfQrI8cQ4vsn06c';
+    
     if (!apiKey) {
       console.warn("API_KEY is missing. AI features will not work.");
       return null;

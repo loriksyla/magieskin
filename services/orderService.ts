@@ -15,22 +15,26 @@ export const getOrders = async (): Promise<Order[]> => {
   // 1. Try Supabase (Cloud DB)
   if (supabase) {
     try {
+      console.log("Fetching orders from Cloud (Supabase)...");
       const { data, error } = await supabase
         .from('orders')
         .select('*')
         .order('date', { ascending: false });
       
       if (error) throw error;
-      if (data) return data as Order[];
+      if (data) {
+        console.log(`Loaded ${data.length} orders from Cloud.`);
+        return data as Order[];
+      }
     } catch (e) {
-      console.error("Supabase fetch error:", e);
-      // Fallback to local storage if DB fails
+      console.error("Supabase fetch error - falling back to local:", e);
     }
   }
 
   // 2. Fallback to Local Storage (Demo Mode)
   return new Promise((resolve) => {
     try {
+      console.warn("Using Local Storage (Data will not sync across devices)");
       const stored = localStorage.getItem(STORAGE_KEY);
       resolve(stored ? decodeData(stored) : []);
     } catch (e) {
@@ -44,11 +48,13 @@ export const saveOrder = async (order: Order): Promise<void> => {
   // 1. Try Supabase
   if (supabase) {
     try {
+      console.log("Saving order to Cloud...");
       const { error } = await supabase
         .from('orders')
         .insert([order]);
       
       if (error) throw error;
+      console.log("Order saved to Cloud successfully.");
       return; // Success
     } catch (e) {
       console.error("Supabase save error:", e);
