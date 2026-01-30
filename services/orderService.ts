@@ -1,4 +1,5 @@
 import { Order } from '../types';
+import { sendOrderEmails } from './emailService';
 import { supabase } from './supabaseClient';
 
 const STORAGE_KEY = 'magie_skin_data_secure';
@@ -55,6 +56,7 @@ export const saveOrder = async (order: Order): Promise<void> => {
       
       if (error) throw error;
       console.log("Order saved to Cloud successfully.");
+      await sendOrderEmails(order);
       return; // Success
     } catch (e) {
       console.error("Supabase save error:", e);
@@ -62,12 +64,13 @@ export const saveOrder = async (order: Order): Promise<void> => {
   }
 
   // 2. Fallback to Local Storage
-  return new Promise((resolve) => {
+  return new Promise(async (resolve) => {
     try {
       const currentOrders = localStorage.getItem(STORAGE_KEY);
       const orders = currentOrders ? decodeData(currentOrders) : [];
       const updatedOrders = [order, ...orders];
       localStorage.setItem(STORAGE_KEY, encodeData(updatedOrders));
+      await sendOrderEmails(order);
       resolve();
     } catch (e) {
       console.error("Local storage save error", e);
