@@ -57,21 +57,21 @@ export const saveOrder = async (order: Order): Promise<void> => {
     return;
   } catch (e) {
     console.error("Order API error:", e);
-  }
-
-  if (import.meta.env.DEV) {
-    return new Promise((resolve) => {
-      try {
-        const currentOrders = localStorage.getItem(STORAGE_KEY);
-        const orders = currentOrders ? decodeData(currentOrders) : [];
-        const updatedOrders = [order, ...orders];
-        localStorage.setItem(STORAGE_KEY, encodeData(updatedOrders));
-        resolve();
-      } catch (e) {
-        console.error("Local storage save error", e);
-        resolve();
-      }
-    });
+    if (import.meta.env.DEV) {
+      return new Promise((resolve) => {
+        try {
+          const currentOrders = localStorage.getItem(STORAGE_KEY);
+          const orders = currentOrders ? decodeData(currentOrders) : [];
+          const updatedOrders = [order, ...orders];
+          localStorage.setItem(STORAGE_KEY, encodeData(updatedOrders));
+          resolve();
+        } catch (e) {
+          console.error("Local storage save error", e);
+          resolve();
+        }
+      });
+    }
+    throw e;
   }
 };
 
